@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "package": "com.hea3ven.unstainer.mixin",
+    "compatibilityLevel": "JAVA_8",
+    "mixins": [
+        "MinecraftClientMixin",
+        "GameRendererMixin",
+        "MouseMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

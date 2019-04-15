@@ -1,0 +1,32 @@
+{
+    "schemaVersion": 1,
+    "id": "unstainer",
+    "name": "Unstainer",
+    "description": "A minecraft testing framework.",
+    "version": "@version@",
+    "authors": [
+        "Hea3veN <hea3venmc@gmail.com>"
+    ],
+    "contact": {
+        "sources": "https://github.com/Hea3veN/Unstainer"
+    },
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            {
+                "adapter": "kotlin",
+                "value": "com.hea3ven.unstainer.UnstainerModInitializer::onInitialize"
+            }
+        ]
+    },
+    "mixins": [
+		"unstainer.mixin.json"
+    ],
+    "requires": {
+        "fabric-lib": "@version_fabric_lib@",
+        "fabric-events-lifecycle": "@version_fabric@",
+        "fabric-language-kotlin": {
+            "version": ">=@version_kotlin@"
+        }
+    }
+}
