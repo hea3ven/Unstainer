@@ -10,7 +10,7 @@ plugins {
     `java`
     kotlin("jvm") version "1.3.30"
     `maven-publish`
-    id("fabric-loom") version "0.2.0-SNAPSHOT"
+    id("fabric-loom") version "0.2.3-SNAPSHOT"
     id("com.matthewprenger.cursegradle") version "1.1.2"
     id("com.github.breadmoirai.github-release") version "2.2.4"
     id("org.ajoberstar.grgit") version "3.0.0"
@@ -33,8 +33,10 @@ val version_kotlin: String by project
 val version_h3nt_commonutils: String by project
 val curse_api_key: String? by project
 val project_curseforge_id: String by project
-/* val changelog: String? by project */
+
+val changelog: String? by project
 val github_release_token: String? by project
+val maven_url: String? by project
 
 group = "$project_group"
 version = "$project_version-$buildNo"
@@ -61,8 +63,6 @@ val shadow by configurations.creating {
 	isTransitive = false
 }
 
-/* compileOnly.extendsFrom(configurations. */
-
 dependencies {
 	minecraft("com.mojang:minecraft:$version_mc_jar")
 	mappings("net.fabricmc:yarn:$version_mc_mappings")
@@ -77,7 +77,7 @@ dependencies {
     /* compileOnly("org.jetbrains.kotlin:kotlin-stdlib:$version_kotlin") */
 
     modCompile("com.hea3ven.tools.commonutils:h3nt-commonutils:$version_h3nt_commonutils")
-    shadow("com.hea3ven.tools.commonutils:h3nt-commonutils:$version_h3nt_commonutils")
+    // shadow("com.hea3ven.tools.commonutils:h3nt-commonutils:$version_h3nt_commonutils")
 
     api("org.hamcrest:hamcrest:2.1")
 
@@ -99,9 +99,9 @@ tasks.processResources {
     }
 }
 
-tasks.withType<Jar> {
-    from(configurations["shadow"].asFileTree.files.filter { !it.name.contains("fabric.mod.json") }.map { zipTree(it) })
-}
+//tasks.withType<Jar> {
+//    from(configurations["shadow"].asFileTree.files.filter { !it.name.contains("fabric.mod.json") }.map { zipTree(it) })
+//}
 
 tasks.register<Jar>("sourcesJar") {
     from(sourceSets["main"].allJava)
@@ -135,6 +135,23 @@ publishing {
     }
 }
 
+val versionRegex = Regex("v[0-9].*")
+val versionExcludeRegex = Regex("v1.(9(.4)?|10)-.*")
+var repo = Grgit.open()
+val lastVersionTag = repo.tag.list()
+        .map { it.fullName.substring(10) }
+        .filterNot(versionExcludeRegex::matches)
+        .filter(versionRegex::matches)
+        .sortedWith({a, b -> -(a.split('.').zip(b.split('.')).map {  it.first.compareTo(it.second) }.filter { it != 0 }.first() ?: 0) })
+        .first()
+val changes = repo.log {
+    range(lastVersionTag, "HEAD")
+}.filter {
+    it.parentIds.size > 1
+}.map {
+    it.fullMessage.removeRange(0, it.fullMessage.indexOf('\n')).trim()
+}.joinToString("\r\n")
+
 curseforge {
     apiKey = curse_api_key ?: ""
 
@@ -159,31 +176,9 @@ configure<GithubReleaseExtension> {
     owner.set("Hea3veN")
     repo.set("Unstainer")
     targetCommitish.set("master")
-    body.set(changelog ?: "")
+    body.set(changes)
     draft.set(false)
     prerelease.set(false)
     releaseAssets.setFrom(tasks.jar.get().outputs.files)
-}
-
-val versionRegex = Regex("v[0-9].*")
-val versionExcludeRegex = Regex("v1.(9(.4)?|10)-.*")
-var repo = Grgit.open()
-println("repo: $repo")
-val lastVersionTag = repo.tag.list()
-        .map { it.fullName.substring(10) }
-        .filterNot(versionExcludeRegex::matches)
-        .filter(versionRegex::matches)
-        .sortedWith({a, b -> -(a.split('.').zip(b.split('.')).map {  it.first.compareTo(it.second) }.filter { it != 0 }.first() ?: 0) })
-        .firstOrNull()
-val changelog = if (lastVersionTag != null) {
-    repo.log {
-        range(lastVersionTag, "HEAD")
-    }.filter {
-        it.parentIds.size > 1
-    }.map {
-        it.fullMessage.removeRange(0, it.fullMessage.indexOf('\n')).trim()
-    }.joinToString("\r\n")
-} else {
-    ""
 }
 
