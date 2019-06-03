@@ -133,6 +133,11 @@ publishing {
             }
         }
     }
+    repositories {
+        maven {
+            url = uri(maven_url ?: "file:///tmp/mvn")
+        }
+    }
 }
 
 val versionRegex = Regex("v[0-9].*")
